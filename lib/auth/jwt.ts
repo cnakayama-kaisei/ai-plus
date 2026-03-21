@@ -1,8 +1,17 @@
 import jwt from 'jsonwebtoken'
 import { JWTPayload } from '@/types/auth'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key'
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
+
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET?.trim()
+
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured')
+  }
+
+  return secret
+}
 
 /**
  * Generate a JWT token for a user
@@ -10,9 +19,9 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h'
  * @returns JWT token string
  */
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJwtSecret(), {
     expiresIn: JWT_EXPIRES_IN,
-  })
+  } as jwt.SignOptions)
 }
 
 /**
@@ -22,7 +31,7 @@ export function generateToken(payload: JWTPayload): string {
  */
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload
+    const decoded = jwt.verify(token, getJwtSecret()) as JWTPayload
     return decoded
   } catch (error) {
     console.error('JWT verification failed:', error)

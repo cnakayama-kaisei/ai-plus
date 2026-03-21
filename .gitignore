@@ -40,3 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 prisma/dev.db
+
+# Claude Code
+.claude/
+
+# Env
+.env
+.env.*
+
+# Local DB
+prisma/dev.db

@@ -6,8 +6,16 @@ export async function POST() {
     { status: 200 }
   )
 
-  // Clear the auth token cookie
-  response.cookies.set('auth_token', '', {
+  // Clear both auth token cookies
+  response.cookies.set('student_auth_token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0, // Expire immediately
+    path: '/',
+  })
+
+  response.cookies.set('admin_auth_token', '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

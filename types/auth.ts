@@ -1,10 +1,12 @@
 export type ContractStatus = 'active' | 'expired' | 'cancelled' | 'suspended'
+export type Role = 'student' | 'admin'
 
 export interface User {
   id: string
   student_id: string
   name: string
   password_hash: string
+  role: Role
   contract_status: ContractStatus
   created_at: Date
 }
@@ -13,6 +15,7 @@ export interface JWTPayload {
   userId: string
   studentId: string
   name: string
+  role: Role
   contractStatus: ContractStatus
 }
 

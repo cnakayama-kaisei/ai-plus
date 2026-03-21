@@ -1,20 +1,87 @@
-// Prisma schema for AI Plus Portal - Phase 1
-// Minimal schema: users table only
+// Prisma schema for AI Plus Portal - Phase 4
+// Added: Admin role and CMS functionality
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id              String   @id @default(uuid())
-  student_id      String   @unique
+  id              String     @id @default(uuid())
+  student_id      String     @unique
   name            String
   password_hash   String
-  contract_status String   // "active" | "expired" | "cancelled" | "suspended"
-  created_at      DateTime @default(now())
+  role            String     @default("student") // "student" | "admin"
+  contract_status String // "active" | "expired" | "cancelled" | "suspended"
+  created_at      DateTime   @default(now())
+  questions       Question[]
+
+  @@index([contract_status]) // Filter active users
+  @@index([created_at]) // Admin dashboard sorting
+  @@index([role]) // Role-based access control
+}
+
+model Category {
+  id         String    @id @default(uuid())
+  name       String
+  sort_order Int       @default(0)
+  created_at DateTime  @default(now())
+  contents   Content[]
+
+  @@index([sort_order]) // Category sorting
+}
+
+model Content {
+  id           String     @id @default(uuid())
+  title        String
+  description  String
+  body         String?
+  type         String // "video" | "text"
+  video_url    String?
+  status       String // "draft" | "published"
+  published_at DateTime?
+  category_id  String
+  category     Category   @relation(fields: [category_id], references: [id])
+  created_at   DateTime   @default(now())
+  updated_at   DateTime   @updatedAt
+  questions    Question[]
+
+  @@index([status, published_at(sort: Desc)]) // Latest published contents (most critical)
+  @@index([status, title]) // Title search
+  @@index([status, description]) // Description search
+  @@index([category_id, status, published_at]) // Category filter
+  @@index([type, status]) // Type filter
+}
+
+model Question {
+  id         String   @id @default(uuid())
+  user_id    String
+  user       User     @relation(fields: [user_id], references: [id])
+  content_id String?
+  content    Content? @relation(fields: [content_id], references: [id])
+  category   String?
+  body       String
+  status     String   @default("open") // "open" | "answered"
+  created_at DateTime @default(now())
+
+  @@index([user_id, created_at(sort: Desc)]) // User question history (most critical)
+  @@index([status, created_at(sort: Desc)]) // Status filter
+  @@index([content_id, created_at(sort: Desc)]) // Content questions
+  @@index([category, created_at(sort: Desc)]) // Category questions
+}
+
+model AdminActionLog {
+  id             String   @id @default(uuid())
+  admin_id       String // ID of the admin who performed the action
+  target_user_id String? // ID of the user affected by the action (nullable for non-user actions)
+  action         String // "RESET_PASSWORD" | "CREATE_USER" | "UPDATE_USER" | etc.
+  created_at     DateTime @default(now())
+
+  @@index([admin_id, created_at(sort: Desc)]) // Admin action history
+  @@index([target_user_id, created_at(sort: Desc)]) // User action history
+  @@index([action, created_at(sort: Desc)]) // Action type filter
 }

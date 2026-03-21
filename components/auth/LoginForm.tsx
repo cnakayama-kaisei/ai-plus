@@ -79,7 +79,7 @@ export default function LoginForm() {
               value={studentId}
               onChange={(e) => setStudentId(e.target.value)}
               className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              placeholder="STU001"
+              placeholder="生徒IDを入力"
               required
               disabled={isLoading}
             />
@@ -114,11 +114,6 @@ export default function LoginForm() {
             </button>
           </div>
         </form>
-
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>テストアカウント:</p>
-          <p>生徒ID: STU001 / パスワード: password123</p>
-        </div>
       </div>
     </div>
   )

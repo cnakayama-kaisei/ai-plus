@@ -7,7 +7,11 @@ import { usePathname, useRouter } from 'next/navigation'
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
-  const isLoginPage = pathname === '/login'
+  const shouldHideHeader = pathname === '/' || pathname.startsWith('/admin')
+
+  if (shouldHideHeader) {
+    return null
+  }
 
   const handleLogout = async () => {
     try {
@@ -40,7 +44,7 @@ export default function Header() {
             <span className="text-xl font-bold text-gray-800">AIプラス</span>
           </Link>
 
-          {!isLoginPage && (
+          {pathname !== '/login' && (
             <nav>
               <button
                 onClick={handleLogout}

@@ -1,70 +1,90 @@
-'use client'
+import Link from 'next/link'
+import { requireStudentPageSession } from '@/lib/auth/session'
+import { getLatestPublishedContents } from '@/lib/db/contents'
 
-import { useRouter } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 
-export default function HomePage() {
-  const router = useRouter()
+export default async function HomePage() {
+  await requireStudentPageSession()
+  const contents = await getLatestPublishedContents(5)
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-      })
+  const formatDate = (date: Date | null) => {
+    if (!date) return ''
+    return new Date(date).toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
 
-      if (response.ok) {
-        router.push('/login')
-        router.refresh()
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'video':
+        return '動画'
+      case 'text':
+        return 'テキスト'
+      case 'audio':
+        return '音声'
+      case 'pdf':
+        return 'PDF'
+      default:
+        return type
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-white shadow-md rounded-lg p-8 max-w-2xl mx-auto">
-          <div className="text-center">
-            <div className="mb-6">
-              <svg
-                className="mx-auto h-16 w-16 text-green-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">
-              ログイン成功しました
-            </h1>
-            <p className="text-gray-600 mb-8">
-              AIプラス受講生専用サイトへようこそ
-            </p>
-
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-gray-700">
-                  このページは仮のホーム画面です。
-                  <br />
-                  Phase 2以降でコンテンツ閲覧機能などが追加されます。
-                </p>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline"
-              >
-                ログアウト
-              </button>
-            </div>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            AIプラス受講生専用サイト
+          </h1>
+          <p className="text-gray-600">
+            キャリドラAIプラスのコンテンツをご覧いただけます
+          </p>
         </div>
+
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">新着コンテンツ</h2>
+        </div>
+
+        {contents.length === 0 ? (
+          <div className="bg-white shadow-md rounded-lg p-8 text-center">
+            <p className="text-gray-600">
+              現在、公開されているコンテンツはありません
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {contents.map((content) => (
+              <Link
+                key={content.id}
+                href={`/content/${content.id}`}
+                className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300"
+              >
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                      {content.category.name}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {getTypeLabel(content.type)}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+                    {content.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                    {content.description}
+                  </p>
+                  <div className="text-xs text-gray-500">
+                    {formatDate(content.published_at)}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -77,6 +77,7 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       studentId: user.student_id,
       name: user.name,
+      role: user.role as 'student' | 'admin',
       contractStatus: user.contract_status as 'active',
     })
 
@@ -91,9 +92,9 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    // Set HTTP-only cookie with token
+    // Set HTTP-only cookie with token (student-specific cookie name)
     const nextResponse = NextResponse.json(response, { status: 200 })
-    nextResponse.cookies.set('auth_token', token, {
+    nextResponse.cookies.set('student_auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
