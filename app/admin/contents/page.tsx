@@ -114,12 +114,20 @@ export default function AdminContentsPage() {
               <h1 className="text-2xl font-bold text-gray-800">AIプラス CMS</h1>
               <p className="text-sm text-gray-600">コンテンツ管理</p>
             </div>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              ログアウト
-            </button>
+            <div className="flex gap-4">
+              <Link
+                href="/admin/users"
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                ユーザー管理
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
+              >
+                ログアウト
+              </button>
+            </div>
           </div>
         </div>
       </div>
