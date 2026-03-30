@@ -1,6 +1,8 @@
 import { User } from '@/types/auth'
 import { prisma } from './prisma'
 
+type UserRole = 'student' | 'admin'
+
 /**
  * Find a user by student ID
  * @param studentId - Student ID to search for
@@ -51,15 +53,16 @@ export function isActiveContract(contractStatus: string): boolean {
 }
 
 /**
- * Create a new student account
- * @param data - Student data
+ * Create a new user account
+ * @param data - User data
  * @returns Created user
  */
-export async function createStudent(data: {
+export async function createUser(data: {
   studentId: string
   name?: string
   passwordHash: string
   contractStatus?: string
+  role?: UserRole
 }) {
   try {
     const user = await prisma.user.create({
@@ -67,27 +70,27 @@ export async function createStudent(data: {
         student_id: data.studentId,
         name: data.name || data.studentId,
         password_hash: data.passwordHash,
-        role: 'student',
+        role: data.role || 'student',
         contract_status: data.contractStatus || 'active',
       },
     })
     return user
   } catch (error) {
-    console.error('Error creating student:', error)
+    console.error('Error creating user:', error)
     throw error
   }
 }
 
 /**
- * Get all students with optional search
+ * Get all users with optional search and role filter
  * @param query - Search query (student_id or name)
- * @returns Array of student users
+ * @returns Array of users
  */
-export async function getStudents(query?: string) {
+export async function getUsers(query?: string, role?: UserRole | 'all') {
   try {
-    const students = await prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: {
-        role: 'student',
+        ...(role && role !== 'all' && { role }),
         ...(query && {
           OR: [
             {
@@ -115,9 +118,9 @@ export async function getStudents(query?: string) {
         created_at: true,
       },
     })
-    return students
+    return users
   } catch (error) {
-    console.error('Error fetching students:', error)
+    console.error('Error fetching users:', error)
     return []
   }
 }

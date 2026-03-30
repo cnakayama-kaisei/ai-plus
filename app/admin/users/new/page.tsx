@@ -8,6 +8,7 @@ interface CreatedUser {
   id: string
   student_id: string
   name: string
+  role: string
   contract_status: string
   password: string
 }
@@ -16,6 +17,7 @@ export default function NewUserPage() {
   const router = useRouter()
   const [studentId, setStudentId] = useState('')
   const [name, setName] = useState('')
+  const [role, setRole] = useState('student')
   const [contractStatus, setContractStatus] = useState('active')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,6 +39,7 @@ export default function NewUserPage() {
         body: JSON.stringify({
           student_id: studentId.trim(),
           name: name.trim() || undefined,
+          role,
           contract_status: contractStatus,
         }),
       })
@@ -53,6 +56,7 @@ export default function NewUserPage() {
           id: data.user.id,
           student_id: data.user.student_id,
           name: data.user.name,
+          role: data.user.role,
           contract_status: data.user.contract_status,
           password: data.password,
         })
@@ -126,10 +130,12 @@ export default function NewUserPage() {
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  生徒アカウントを作成しました
+                  {createdUser.role === 'admin'
+                    ? '管理者アカウントを作成しました'
+                    : '生徒アカウントを作成しました'}
                 </h2>
                 <p className="text-gray-600">
-                  以下の情報を生徒に共有してください。
+                  以下の情報を対象ユーザーに共有してください。
                   <br />
                   <span className="text-red-600 font-semibold">
                     パスワードはこの画面でのみ表示されます。
@@ -152,8 +158,14 @@ export default function NewUserPage() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium text-gray-700">ロール:</span>
+                    <span className="text-lg font-semibold text-gray-900">
+                      {createdUser.role === 'admin' ? '管理者' : '生徒'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-gray-700">
-                      契約ステータス:
+                      ステータス:
                     </span>
                     <span className="text-lg font-semibold text-gray-900">
                       {createdUser.contract_status === 'active' ? '有効' : createdUser.contract_status}
@@ -261,7 +273,7 @@ export default function NewUserPage() {
 
           <div className="bg-white shadow-md rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">
-              新しい生徒を追加
+              新しいユーザーを追加
             </h2>
 
             {error && (
@@ -273,10 +285,29 @@ export default function NewUserPage() {
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
                 <label
+                  htmlFor="role"
+                  className="block text-gray-700 text-sm font-bold mb-2"
+                >
+                  ロール <span className="text-red-600">*</span>
+                </label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isLoading}
+                >
+                  <option value="student">生徒</option>
+                  <option value="admin">管理者</option>
+                </select>
+              </div>
+
+              <div className="mb-6">
+                <label
                   htmlFor="studentId"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  生徒ID <span className="text-red-600">*</span>
+                  ログインID <span className="text-red-600">*</span>
                 </label>
                 <input
                   id="studentId"
@@ -284,7 +315,7 @@ export default function NewUserPage() {
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="例: STU001"
+                  placeholder={role === 'admin' ? '例: ADMIN002' : '例: STU001'}
                   required
                   disabled={isLoading}
                 />
@@ -310,7 +341,7 @@ export default function NewUserPage() {
                   disabled={isLoading}
                 />
                 <p className="text-xs text-gray-600 mt-1">
-                  空欄の場合は生徒IDが使用されます
+                  空欄の場合はログインIDが使用されます
                 </p>
               </div>
 
@@ -319,7 +350,7 @@ export default function NewUserPage() {
                   htmlFor="contractStatus"
                   className="block text-gray-700 text-sm font-bold mb-2"
                 >
-                  契約ステータス
+                  ステータス
                 </label>
                 <select
                   id="contractStatus"
@@ -357,7 +388,11 @@ export default function NewUserPage() {
                   disabled={isLoading}
                   className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {isLoading ? '作成中...' : '生徒を追加'}
+                  {isLoading
+                    ? '作成中...'
+                    : role === 'admin'
+                      ? '管理者を追加'
+                      : '生徒を追加'}
                 </button>
               </div>
             </form>

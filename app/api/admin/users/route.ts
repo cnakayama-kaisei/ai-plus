@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth/jwt'
-import { createStudent, getStudents } from '@/lib/db/users'
+import { createUser, getUsers } from '@/lib/db/users'
 import { generateSecurePassword } from '@/lib/auth/password-generator'
 import { hashPassword } from '@/lib/auth/password'
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
-    const { student_id, name, contract_status } = body
+    const { student_id, name, contract_status, role } = body
 
     // Validate student_id
     if (!student_id || typeof student_id !== 'string' || student_id.trim() === '') {
@@ -48,16 +48,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const validRoles = ['student', 'admin']
+    if (role && !validRoles.includes(role)) {
+      return NextResponse.json(
+        { success: false, message: 'ロールは student または admin を指定してください' },
+        { status: 400 }
+      )
+    }
+
     // Generate password
     const plainPassword = generateSecurePassword()
     const passwordHash = await hashPassword(plainPassword)
 
-    // Create student
-    const user = await createStudent({
+    // Create user
+    const user = await createUser({
       studentId: student_id.trim(),
       name: name?.trim(),
       passwordHash,
       contractStatus: contract_status || 'active',
+      role: role || 'student',
     })
 
     // Return created user with plain password (only shown once)
@@ -85,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { success: false, message: '生徒アカウントの作成に失敗しました' },
+      { success: false, message: 'ユーザーアカウントの作成に失敗しました' },
       { status: 500 }
     )
   }
@@ -125,18 +134,26 @@ export async function GET(request: NextRequest) {
     // Get query parameter for search
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query') || undefined
+    const roleParam = searchParams.get('role') || 'all'
 
-    // Fetch students
-    const students = await getStudents(query)
+    if (!['all', 'student', 'admin'].includes(roleParam)) {
+      return NextResponse.json(
+        { success: false, message: 'role は all, student, admin のいずれかを指定してください' },
+        { status: 400 }
+      )
+    }
+
+    // Fetch users
+    const users = await getUsers(query, roleParam as 'all' | 'student' | 'admin')
 
     return NextResponse.json({
       success: true,
-      users: students,
+      users,
     })
   } catch (error) {
     console.error('Error fetching students:', error)
     return NextResponse.json(
-      { success: false, message: '生徒一覧の取得に失敗しました' },
+      { success: false, message: 'ユーザー一覧の取得に失敗しました' },
       { status: 500 }
     )
   }

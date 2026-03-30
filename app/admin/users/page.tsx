@@ -17,6 +17,7 @@ export default function AdminUsersPage() {
   const router = useRouter()
   const [students, setStudents] = useState<Student[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -35,8 +36,8 @@ export default function AdminUsersPage() {
 
     try {
       const url = query
-        ? `/api/admin/users?query=${encodeURIComponent(query)}`
-        : '/api/admin/users'
+        ? `/api/admin/users?query=${encodeURIComponent(query)}&role=${roleFilter}`
+        : `/api/admin/users?role=${roleFilter}`
 
       const response = await fetch(url, {
         credentials: 'include',
@@ -59,7 +60,7 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [router])
+  }, [roleFilter, router])
 
   useEffect(() => {
     fetchStudents()
@@ -203,6 +204,10 @@ export default function AdminUsersPage() {
     })
   }
 
+  const getRoleLabel = (role: string) => {
+    return role === 'admin' ? '管理者' : '生徒'
+  }
+
   return (
     <>
       {/* Password Reset Confirmation Dialog */}
@@ -337,11 +342,20 @@ export default function AdminUsersPage() {
         {/* Actions Bar */}
         <div className="mb-6 flex justify-between items-center">
           <form onSubmit={handleSearch} className="flex gap-4 items-center">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">すべて</option>
+              <option value="student">生徒</option>
+              <option value="admin">管理者</option>
+            </select>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="生徒IDまたは名前で検索"
+              placeholder="ログインIDまたは名前で検索"
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-80"
             />
             <button
@@ -368,7 +382,7 @@ export default function AdminUsersPage() {
             href="/admin/users/new"
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            生徒を追加
+            ユーザーを追加
           </Link>
         </div>
 
@@ -383,18 +397,18 @@ export default function AdminUsersPage() {
             <p className="text-gray-600">読み込み中...</p>
           </div>
         ) : students.length === 0 ? (
-          <div className="bg-white shadow-md rounded-lg p-8 text-center">
+              <div className="bg-white shadow-md rounded-lg p-8 text-center">
             <p className="text-gray-600 mb-4">
               {searchQuery
-                ? '該当する生徒が見つかりませんでした'
-                : '生徒が登録されていません'}
+                ? '該当するユーザーが見つかりませんでした'
+                : 'ユーザーが登録されていません'}
             </p>
             {!searchQuery && (
               <Link
                 href="/admin/users/new"
                 className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                最初の生徒を追加
+                最初のユーザーを追加
               </Link>
             )}
           </div>
@@ -404,13 +418,16 @@ export default function AdminUsersPage() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    生徒ID
+                    ログインID
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     名前
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    契約ステータス
+                    ロール
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ステータス
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     登録日
@@ -433,6 +450,11 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">{student.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {getRoleLabel(student.role)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <select
