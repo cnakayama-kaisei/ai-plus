@@ -9,6 +9,11 @@ interface Category {
   name: string
 }
 
+function toApiDateTime(value: string) {
+  if (!value) return null
+  return new Date(value).toISOString()
+}
+
 export default function NewContentPage() {
   const router = useRouter()
   const [categories, setCategories] = useState<Category[]>([])
@@ -60,7 +65,7 @@ export default function NewContentPage() {
           ...formData,
           body: formData.body || null,
           video_url: formData.video_url || null,
-          published_at: formData.published_at || null,
+          published_at: toApiDateTime(formData.published_at),
         }),
       })
 

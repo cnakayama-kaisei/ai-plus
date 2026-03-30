@@ -21,6 +21,48 @@ function buildStudentVisibleWhere() {
   }
 }
 
+function extractChapterNumber(title: string) {
+  const match = title.match(/chapter\s*0*(\d+)/i)
+  if (!match) return null
+
+  const chapterNumber = Number.parseInt(match[1], 10)
+  return Number.isNaN(chapterNumber) ? null : chapterNumber
+}
+
+function sortContentsForStudents<
+  T extends {
+    title: string
+    published_at: Date | null
+    created_at: Date
+  },
+>(contents: T[]) {
+  return [...contents].sort((a, b) => {
+    const chapterA = extractChapterNumber(a.title)
+    const chapterB = extractChapterNumber(b.title)
+
+    if (chapterA !== null && chapterB !== null && chapterA !== chapterB) {
+      return chapterA - chapterB
+    }
+
+    if (chapterA !== null && chapterB === null) {
+      return -1
+    }
+
+    if (chapterA === null && chapterB !== null) {
+      return 1
+    }
+
+    const publishedAtA = a.published_at?.getTime() ?? 0
+    const publishedAtB = b.published_at?.getTime() ?? 0
+
+    if (publishedAtA !== publishedAtB) {
+      return publishedAtB - publishedAtA
+    }
+
+    return b.created_at.getTime() - a.created_at.getTime()
+  })
+}
+
 // Cache keys for future cache implementation (Phase 4)
 export const CACHE_KEYS = {
   latestPublished: (limit: number) => `contents:latest:${limit}`,
@@ -41,12 +83,16 @@ export async function getLatestPublishedContents(limit: number = 5) {
       include: {
         category: true,
       },
-      orderBy: {
-        published_at: 'desc',
-      },
-      take: limit,
+      orderBy: [
+        {
+          published_at: 'desc',
+        },
+        {
+          created_at: 'desc',
+        },
+      ],
     })
-    return contents
+    return sortContentsForStudents(contents).slice(0, limit)
   } catch (error) {
     console.error('Error fetching latest contents:', error)
     return []
@@ -139,11 +185,8 @@ export async function searchPublishedContents(keyword: string) {
       include: {
         category: true,
       },
-      orderBy: {
-        published_at: 'desc',
-      },
     })
-    return contents
+    return sortContentsForStudents(contents)
   } catch (error) {
     console.error('Error searching contents:', error)
     return []
@@ -186,9 +229,6 @@ export async function searchPublishedContentsWithPagination(
           ],
         },
         include: { category: true },
-        orderBy: { published_at: 'desc' },
-        skip,
-        take: limit,
       }),
       prisma.content.count({
         where: {
@@ -206,8 +246,11 @@ export async function searchPublishedContentsWithPagination(
       }),
     ])
 
+    const sortedContents = sortContentsForStudents(contents)
+    const paginatedContents = sortedContents.slice(skip, skip + limit)
+
     return {
-      contents,
+      contents: paginatedContents,
       total,
       page,
       limit,

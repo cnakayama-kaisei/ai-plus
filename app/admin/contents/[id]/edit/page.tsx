@@ -21,6 +21,17 @@ interface Content {
   category_id: string
 }
 
+function toApiDateTime(value: string) {
+  if (!value) return null
+  return new Date(value).toISOString()
+}
+
+function toDateTimeLocalValue(value: Date | string) {
+  const date = new Date(value)
+  const offset = date.getTimezoneOffset()
+  return new Date(date.getTime() - offset * 60 * 1000).toISOString().slice(0, 16)
+}
+
 export default function EditContentPage() {
   const router = useRouter()
   const params = useParams()
@@ -72,7 +83,7 @@ export default function EditContentPage() {
           video_url: content.video_url || '',
           status: content.status,
           published_at: content.published_at
-            ? new Date(content.published_at).toISOString().slice(0, 16)
+            ? toDateTimeLocalValue(content.published_at)
             : '',
           category_id: content.category_id,
         })
@@ -107,7 +118,7 @@ export default function EditContentPage() {
           ...formData,
           body: formData.body || null,
           video_url: formData.video_url || null,
-          published_at: formData.published_at || null,
+          published_at: toApiDateTime(formData.published_at),
         }),
       })
 
