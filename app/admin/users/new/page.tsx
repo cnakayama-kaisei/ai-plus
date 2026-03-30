@@ -89,6 +89,16 @@ export default function NewUserPage() {
     router.push('/admin/login')
   }
 
+  const handleContinueAdding = () => {
+    setStudentId('')
+    setName('')
+    setRole('student')
+    setContractStatus('active')
+    setError('')
+    setCopied(false)
+    setCreatedUser(null)
+  }
+
   if (createdUser) {
     return (
       <div className="min-h-screen bg-gray-100">
@@ -213,12 +223,13 @@ export default function NewUserPage() {
                 >
                   ユーザー管理に戻る
                 </Link>
-                <Link
-                  href="/admin/users/new"
+                <button
+                  type="button"
+                  onClick={handleContinueAdding}
                   className="flex-1 px-6 py-3 bg-gray-600 text-white text-center rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   続けて追加
-                </Link>
+                </button>
               </div>
             </div>
           </div>
