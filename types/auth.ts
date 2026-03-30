@@ -1,4 +1,4 @@
-export type ContractStatus = 'active' | 'expired' | 'cancelled' | 'suspended'
+export type ContractStatus = 'active' | 'suspended'
 export type Role = 'student' | 'admin'
 
 export interface User {

@@ -18,6 +18,7 @@ export default function AdminUsersPage() {
   const [students, setStudents] = useState<Student[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
@@ -36,8 +37,8 @@ export default function AdminUsersPage() {
 
     try {
       const url = query
-        ? `/api/admin/users?query=${encodeURIComponent(query)}&role=${roleFilter}`
-        : `/api/admin/users?role=${roleFilter}`
+        ? `/api/admin/users?query=${encodeURIComponent(query)}&role=${roleFilter}&status=${statusFilter}`
+        : `/api/admin/users?role=${roleFilter}&status=${statusFilter}`
 
       const response = await fetch(url, {
         credentials: 'include',
@@ -60,7 +61,7 @@ export default function AdminUsersPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [roleFilter, router])
+  }, [roleFilter, router, statusFilter])
 
   useEffect(() => {
     fetchStudents()
@@ -171,18 +172,6 @@ export default function AdminUsersPage() {
         return (
           <span className="px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded">
             有効
-          </span>
-        )
-      case 'expired':
-        return (
-          <span className="px-2 py-1 text-xs font-semibold text-red-800 bg-red-100 rounded">
-            期限切れ
-          </span>
-        )
-      case 'cancelled':
-        return (
-          <span className="px-2 py-1 text-xs font-semibold text-orange-800 bg-orange-100 rounded">
-            キャンセル
           </span>
         )
       case 'suspended':
@@ -351,6 +340,15 @@ export default function AdminUsersPage() {
               <option value="student">生徒</option>
               <option value="admin">管理者</option>
             </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="all">すべてのステータス</option>
+              <option value="active">有効</option>
+              <option value="suspended">停止中</option>
+            </select>
             <input
               type="text"
               value={searchQuery}
@@ -466,8 +464,6 @@ export default function AdminUsersPage() {
                         className="text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                       >
                         <option value="active">有効</option>
-                        <option value="expired">期限切れ</option>
-                        <option value="cancelled">キャンセル</option>
                         <option value="suspended">停止中</option>
                       </select>
                     </td>

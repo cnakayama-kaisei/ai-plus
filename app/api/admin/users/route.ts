@@ -56,6 +56,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const validStatuses = ['active', 'suspended']
+    if (contract_status && !validStatuses.includes(contract_status)) {
+      return NextResponse.json(
+        { success: false, message: 'ステータスは active または suspended を指定してください' },
+        { status: 400 }
+      )
+    }
+
     // Generate password
     const plainPassword = generateSecurePassword()
     const passwordHash = await hashPassword(plainPassword)
@@ -135,6 +143,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query') || undefined
     const roleParam = searchParams.get('role') || 'all'
+    const statusParam = searchParams.get('status') || 'all'
 
     if (!['all', 'student', 'admin'].includes(roleParam)) {
       return NextResponse.json(
@@ -143,8 +152,19 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    if (!['all', 'active', 'suspended'].includes(statusParam)) {
+      return NextResponse.json(
+        { success: false, message: 'status は all, active, suspended のいずれかを指定してください' },
+        { status: 400 }
+      )
+    }
+
     // Fetch users
-    const users = await getUsers(query, roleParam as 'all' | 'student' | 'admin')
+    const users = await getUsers(
+      query,
+      roleParam as 'all' | 'student' | 'admin',
+      statusParam as 'all' | 'active' | 'suspended'
+    )
 
     return NextResponse.json({
       success: true,

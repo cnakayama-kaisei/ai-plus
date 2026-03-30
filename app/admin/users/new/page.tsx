@@ -89,6 +89,10 @@ export default function NewUserPage() {
     router.push('/admin/login')
   }
 
+  const getStatusLabel = (status: string) => {
+    return status === 'active' ? '有効' : '停止中'
+  }
+
   const handleContinueAdding = () => {
     setStudentId('')
     setName('')
@@ -108,7 +112,7 @@ export default function NewUserPage() {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">AIプラス CMS</h1>
-                <p className="text-sm text-gray-600">生徒アカウント作成完了</p>
+                <p className="text-sm text-gray-600">ユーザーアカウント作成完了</p>
               </div>
               <button
                 onClick={handleLogout}
@@ -178,7 +182,7 @@ export default function NewUserPage() {
                       ステータス:
                     </span>
                     <span className="text-lg font-semibold text-gray-900">
-                      {createdUser.contract_status === 'active' ? '有効' : createdUser.contract_status}
+                      {getStatusLabel(createdUser.contract_status)}
                     </span>
                   </div>
                 </div>
@@ -244,10 +248,10 @@ export default function NewUserPage() {
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">AIプラス CMS</h1>
-              <p className="text-sm text-gray-600">生徒アカウント作成</p>
-            </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">AIプラス CMS</h1>
+                <p className="text-sm text-gray-600">ユーザーアカウント作成</p>
+              </div>
             <button
               onClick={handleLogout}
               className="px-4 py-2 text-sm text-gray-700 bg-gray-200 rounded hover:bg-gray-300"
@@ -371,8 +375,6 @@ export default function NewUserPage() {
                   disabled={isLoading}
                 >
                   <option value="active">有効</option>
-                  <option value="expired">期限切れ</option>
-                  <option value="cancelled">キャンセル</option>
                   <option value="suspended">停止中</option>
                 </select>
               </div>

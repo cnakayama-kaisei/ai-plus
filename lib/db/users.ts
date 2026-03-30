@@ -2,6 +2,11 @@ import { User } from '@/types/auth'
 import { prisma } from './prisma'
 
 type UserRole = 'student' | 'admin'
+type UserStatus = 'active' | 'suspended'
+
+function normalizeContractStatus(status: string): UserStatus {
+  return status === 'active' ? 'active' : 'suspended'
+}
 
 /**
  * Find a user by student ID
@@ -61,7 +66,7 @@ export async function createUser(data: {
   studentId: string
   name?: string
   passwordHash: string
-  contractStatus?: string
+  contractStatus?: UserStatus
   role?: UserRole
 }) {
   try {
@@ -86,11 +91,21 @@ export async function createUser(data: {
  * @param query - Search query (student_id or name)
  * @returns Array of users
  */
-export async function getUsers(query?: string, role?: UserRole | 'all') {
+export async function getUsers(
+  query?: string,
+  role?: UserRole | 'all',
+  status?: UserStatus | 'all'
+) {
   try {
     const users = await prisma.user.findMany({
       where: {
         ...(role && role !== 'all' && { role }),
+        ...(status === 'active' && { contract_status: 'active' }),
+        ...(status === 'suspended' && {
+          contract_status: {
+            not: 'active',
+          },
+        }),
         ...(query && {
           OR: [
             {
@@ -118,7 +133,10 @@ export async function getUsers(query?: string, role?: UserRole | 'all') {
         created_at: true,
       },
     })
-    return users
+    return users.map((user) => ({
+      ...user,
+      contract_status: normalizeContractStatus(user.contract_status),
+    }))
   } catch (error) {
     console.error('Error fetching users:', error)
     return []

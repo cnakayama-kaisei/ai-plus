@@ -51,23 +51,9 @@ export async function POST(request: NextRequest) {
 
     // Check contract status
     if (!isActiveContract(user.contract_status)) {
-      let message = 'ログインできません'
-
-      switch (user.contract_status) {
-        case 'expired':
-          message = '契約が終了しています。ログインできません。'
-          break
-        case 'cancelled':
-          message = '契約がキャンセルされています。ログインできません。'
-          break
-        case 'suspended':
-          message = 'アカウントが一時停止されています。ログインできません。'
-          break
-      }
-
       const response: LoginResponse = {
         success: false,
-        message,
+        message: 'アカウントが停止中のためログインできません。',
       }
       return NextResponse.json(response, { status: 403 })
     }

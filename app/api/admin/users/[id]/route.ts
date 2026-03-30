@@ -45,12 +45,12 @@ export async function PATCH(
     const { contract_status } = body
 
     // Validate contract_status
-    const validStatuses = ['active', 'expired', 'cancelled', 'suspended']
+    const validStatuses = ['active', 'suspended']
     if (!contract_status || !validStatuses.includes(contract_status)) {
       return NextResponse.json(
         {
           success: false,
-          message: '契約ステータスは active, expired, cancelled, suspended のいずれかを指定してください',
+          message: 'ステータスは active または suspended のいずれかを指定してください',
         },
         { status: 400 }
       )
