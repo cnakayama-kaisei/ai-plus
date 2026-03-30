@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth/jwt'
 import { getContentByIdForAdmin, updateContent } from '@/lib/db/contents'
+import { parseVideoUrl } from '@/lib/video/parser'
 import { z } from 'zod'
 
 // Validation schema for content update
@@ -15,6 +16,30 @@ const updateContentSchema = z.object({
   published_at: z.string().optional().nullable(),
   category_id: z.string().optional(),
 })
+
+function validateVideoContent(data: {
+  type: 'video' | 'text'
+  status: 'draft' | 'published'
+  video_url?: string | null
+}) {
+  if (data.type !== 'video') {
+    return null
+  }
+
+  if (data.status === 'published' && !data.video_url) {
+    return '動画コンテンツを公開するには動画URLが必要です'
+  }
+
+  if (data.video_url) {
+    const videoInfo = parseVideoUrl(data.video_url)
+
+    if (videoInfo.type === 'unsupported') {
+      return '再生に対応した動画URLを設定してください'
+    }
+  }
+
+  return null
+}
 
 /**
  * GET - Get single content by ID (for editing)
@@ -124,6 +149,46 @@ export async function PUT(
 
     const data = validationResult.data
     const { id } = await params
+    const existingContent = await getContentByIdForAdmin(id)
+
+    if (!existingContent) {
+      return NextResponse.json(
+        { success: false, message: 'コンテンツが見つかりません' },
+        { status: 404 }
+      )
+    }
+
+    const nextType = data.type ?? existingContent.type
+    const nextStatus = data.status ?? existingContent.status
+    const nextVideoUrl =
+      data.video_url !== undefined ? data.video_url || null : existingContent.video_url
+
+    if (nextType !== 'video' && nextType !== 'text') {
+      return NextResponse.json(
+        { success: false, message: '未対応のコンテンツタイプです' },
+        { status: 400 }
+      )
+    }
+
+    if (nextStatus !== 'draft' && nextStatus !== 'published') {
+      return NextResponse.json(
+        { success: false, message: '未対応の公開ステータスです' },
+        { status: 400 }
+      )
+    }
+
+    const videoValidationError = validateVideoContent({
+      type: nextType,
+      status: nextStatus,
+      video_url: nextVideoUrl,
+    })
+
+    if (videoValidationError) {
+      return NextResponse.json(
+        { success: false, message: videoValidationError },
+        { status: 400 }
+      )
+    }
 
     // Update content
     const content = await updateContent(id, {

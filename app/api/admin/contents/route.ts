@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth/jwt'
 import { getAllContentsForAdmin, createContent, getAllCategories } from '@/lib/db/contents'
+import { parseVideoUrl } from '@/lib/video/parser'
 import { z } from 'zod'
 
 // Validation schema for content creation
@@ -15,6 +16,30 @@ const createContentSchema = z.object({
   published_at: z.string().optional().nullable(),
   category_id: z.string().min(1, 'カテゴリを選択してください'),
 })
+
+function validateVideoContent(data: {
+  type: 'video' | 'text'
+  status: 'draft' | 'published'
+  video_url?: string | null
+}) {
+  if (data.type !== 'video') {
+    return null
+  }
+
+  if (data.status === 'published' && !data.video_url) {
+    return '動画コンテンツを公開するには動画URLが必要です'
+  }
+
+  if (data.video_url) {
+    const videoInfo = parseVideoUrl(data.video_url)
+
+    if (videoInfo.type === 'unsupported') {
+      return '再生に対応した動画URLを設定してください'
+    }
+  }
+
+  return null
+}
 
 /**
  * GET - Get all contents for admin (with optional status filter)
@@ -118,6 +143,18 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validationResult.data
+    const videoValidationError = validateVideoContent({
+      type: data.type,
+      status: data.status,
+      video_url: data.video_url || null,
+    })
+
+    if (videoValidationError) {
+      return NextResponse.json(
+        { success: false, message: videoValidationError },
+        { status: 400 }
+      )
+    }
 
     // Create content
     const content = await createContent({

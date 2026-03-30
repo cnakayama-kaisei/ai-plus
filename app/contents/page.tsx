@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { requireStudentPageSession } from '@/lib/auth/session'
-import { getLatestPublishedContents } from '@/lib/db/contents'
+import { getAllPublishedContents } from '@/lib/db/contents'
 
 export const dynamic = 'force-dynamic'
 
-export default async function HomePage() {
+export default async function ContentsPage() {
   await requireStudentPageSession()
-  const contents = await getLatestPublishedContents(5)
+  const contents = await getAllPublishedContents()
 
   const formatDate = (date: Date | null) => {
     if (!date) return ''
@@ -23,10 +23,6 @@ export default async function HomePage() {
         return '動画'
       case 'text':
         return 'テキスト'
-      case 'audio':
-        return '音声'
-      case 'pdf':
-        return 'PDF'
       default:
         return type
     }
@@ -36,24 +32,10 @@ export default async function HomePage() {
     <div className="min-h-screen bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            AIプラス受講生専用サイト
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">教材一覧</h1>
           <p className="text-gray-600">
-            キャリドラAIプラスのコンテンツをご覧いただけます
+            公開中の教材をチャプター順で一覧表示しています
           </p>
-        </div>
-
-        <div className="mb-6">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-bold text-gray-800">新着コンテンツ</h2>
-            <Link
-              href="/contents"
-              className="text-sm font-medium text-blue-600 hover:text-blue-800"
-            >
-              教材一覧を見る
-            </Link>
-          </div>
         </div>
 
         {contents.length === 0 ? (
@@ -79,9 +61,9 @@ export default async function HomePage() {
                       {getTypeLabel(content.type)}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+                  <h2 className="text-xl font-bold text-gray-800 mb-2 line-clamp-2">
                     {content.title}
-                  </h3>
+                  </h2>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                     {content.description}
                   </p>

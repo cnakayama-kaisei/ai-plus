@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken } from '@/lib/auth/jwt'
-import { updateUserContractStatus } from '@/lib/db/users'
+import { countActiveAdmins, findUserById, updateUserContractStatus } from '@/lib/db/users'
 
 /**
  * PATCH /api/admin/users/[id] - Update user contract status
@@ -40,6 +40,15 @@ export async function PATCH(
     // Get user ID from params
     const { id } = await params
 
+    const targetUser = await findUserById(id)
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { success: false, message: 'ユーザーが見つかりません' },
+        { status: 404 }
+      )
+    }
+
     // Parse request body
     const body = await request.json()
     const { contract_status } = body
@@ -54,6 +63,29 @@ export async function PATCH(
         },
         { status: 400 }
       )
+    }
+
+    if (contract_status === 'suspended' && targetUser.role === 'admin') {
+      if (targetUser.id === payload.userId) {
+        return NextResponse.json(
+          { success: false, message: '自分自身の管理者アカウントは停止できません' },
+          { status: 400 }
+        )
+      }
+
+      if (targetUser.contract_status === 'active') {
+        const activeAdminCount = await countActiveAdmins()
+
+        if (activeAdminCount <= 1) {
+          return NextResponse.json(
+            {
+              success: false,
+              message: '最後の有効な管理者アカウントは停止できません',
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     // Update contract status

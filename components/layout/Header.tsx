@@ -45,7 +45,25 @@ export default function Header() {
           </Link>
 
           {pathname !== '/login' && (
-            <nav>
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/home"
+                className={pathname === '/home' ? 'font-semibold text-gray-900' : 'text-gray-600 hover:text-gray-800 font-medium'}
+              >
+                ホーム
+              </Link>
+              <Link
+                href="/contents"
+                className={pathname === '/contents' ? 'font-semibold text-gray-900' : 'text-gray-600 hover:text-gray-800 font-medium'}
+              >
+                教材一覧
+              </Link>
+              <Link
+                href="/search"
+                className={pathname === '/search' ? 'font-semibold text-gray-900' : 'text-gray-600 hover:text-gray-800 font-medium'}
+              >
+                検索
+              </Link>
               <button
                 onClick={handleLogout}
                 className="text-gray-600 hover:text-gray-800 font-medium"

@@ -48,6 +48,20 @@ export async function findUserById(id: string): Promise<User | null> {
   }
 }
 
+export async function countActiveAdmins() {
+  try {
+    return await prisma.user.count({
+      where: {
+        role: 'admin',
+        contract_status: 'active',
+      },
+    })
+  } catch (error) {
+    console.error('Error counting active admins:', error)
+    return 0
+  }
+}
+
 /**
  * Check if a user's contract status is active
  * @param contractStatus - Contract status to check

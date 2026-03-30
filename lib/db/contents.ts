@@ -100,6 +100,34 @@ export async function getLatestPublishedContents(limit: number = 5) {
 }
 
 /**
+ * Get all published contents for students
+ * @returns Array of published contents with category information
+ */
+export async function getAllPublishedContents() {
+  try {
+    const contents = await prisma.content.findMany({
+      where: buildStudentVisibleWhere(),
+      include: {
+        category: true,
+      },
+      orderBy: [
+        {
+          published_at: 'desc',
+        },
+        {
+          created_at: 'desc',
+        },
+      ],
+    })
+
+    return sortContentsForStudents(contents)
+  } catch (error) {
+    console.error('Error fetching all published contents:', error)
+    return []
+  }
+}
+
+/**
  * Get content by ID (published only, for students)
  * @param id - Content ID
  * @returns Content with category information or null
